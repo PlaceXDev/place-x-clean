@@ -4,7 +4,7 @@ import { normalizePostcode, toCompact } from "@/lib/postcode";
 
 export type DbRow = {
   pc_norm: string;
-  postcode?: string | null;      // support either column name
+  postcode?: string | null;               // support either column name
   pc_display?: string | null;
   liveability_score: number | null;
   crime: number | null;
@@ -24,27 +24,11 @@ export type DbRow = {
   [key: string]: unknown;
 };
 
-// ...imports & types...
-export async function getPostcode(rawPc: string) {
-  const raw = decodeURIComponent(rawPc || "");
-  const pretty = normalizePostcode(raw);
-  if (!pretty) return null;
+export type PostcodeMetrics =
+  // everything from the row
+  Omit<DbRow, "postcode" | "pc_display"> & {
+    // ensure we always return a display string
+    pc_display: string;
+  };
 
-  const pc_norm = toCompact(pretty);
-
-  const { data, error } = await supabase
-    .from("postcode_metrics")
-    .select("*")
-    .eq("pc_norm", pc_norm)
-    .eq("is_published", true)
-    .maybeSingle();
-
-  if (error) throw error;
-  if (!data) return null;
-
-  const row = data as DbRow;
-  const pc_display = row.postcode ?? row.pc_display ?? pretty;
-
-  const { pc_norm: _pc_norm, pc_display: _pc_display, postcode: _postcode, ...rest } = row;
-  return { pc_norm, pc_display, ...rest };
-}
+/** Omit keys from a record without introducing unused variables**
