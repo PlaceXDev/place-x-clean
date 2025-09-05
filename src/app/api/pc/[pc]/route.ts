@@ -1,12 +1,15 @@
 export const runtime = "nodejs";
+
+import type { NextRequest } from "next/server";
 import { getPostcode } from "@/data/getPostcode";
 
 export async function GET(
-  _req: Request,
-  { params }: { params: { pc: string } }
+  _req: NextRequest,
+  { params }: { params: Promise<{ pc: string }> } // ← Promise form for typed routes
 ) {
   try {
-    const row = await getPostcode(params.pc);
+    const { pc } = await params;
+    const row = await getPostcode(pc);
     return Response.json({ ok: !!row, row });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
