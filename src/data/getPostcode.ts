@@ -20,6 +20,8 @@ export type DbRow = {
   population_growth: number | null;
   is_published: boolean;
   updated_at: string;
+  // allow other columns (e.g. id) without strict typing
+  [key: string]: unknown;
 };
 
 export async function getPostcode(rawPc: string) {
@@ -48,5 +50,8 @@ export async function getPostcode(rawPc: string) {
   const row = data as DbRow;
   const pc_display = row.postcode ?? row.pc_display ?? pretty;
 
-  return { pc_norm, pc_display, ...row };
+  // Strip potential duplicates before spreading to avoid "specified more than once"
+  const { pc_norm: _pc_norm, pc_display: _pc_display, postcode: _postcode, ...rest } = row;
+
+  return { pc_norm, pc_display, ...rest };
 }
