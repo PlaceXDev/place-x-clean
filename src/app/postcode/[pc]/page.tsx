@@ -1,57 +1,35 @@
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
+// src/app/postcode/[pc]/page.tsx
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { getPostcode } from "@/data/getPostcode";
 
-const LABELS: Record<string, string> = {
-  liveability_score: "Liveability Score",
-  crime: "Crime",
-  education: "Education",
-  open_space: "Open Space",
-  income: "Income",
-  average_house_price: "Average House Price",
-  house_price_growth: "House Price Growth",
-  average_house_size: "Average House Size",
-  typical_house_type: "Typical House Type",
-  future_housing_price_growth: "Future Housing Price Growth",
-  future_prospects_score: "Future Prospects Score",
-  population_growth: "Population Growth",
-};
+type RouteParams = { pc: string };
 
-type Row = NonNullable<Awaited<ReturnType<typeof getPostcode>>>;
+// If you use dynamic metadata, keep this signature exactly:
+export async function generateMetadata(
+  { params }: { params: RouteParams }
+): Promise<Metadata> {
+  const pc = decodeURIComponent(params.pc);
+  return {
+    title: `Postcode ${pc} | Place X`,
+    description: `Insights for postcode ${pc}.`,
+  };
+}
 
+// Main page component — keep params as a plain object
 export default async function PostcodePage(
-  { params }: { params: { pc: string } }
+  { params }: { params: RouteParams }
 ) {
-  const decoded = decodeURIComponent(params.pc || "");
-  const row = await getPostcode(decoded);
+  const pc = decodeURIComponent(params.pc);
+
+  const row = await getPostcode(pc);
   if (!row) notFound();
 
-  const hidden: Array<keyof Row> = ["pc_norm", "pc_display", "is_published", "updated_at"];
-  const fields = (Object.keys(row) as Array<keyof Row>).filter((k) => !hidden.includes(k));
-
+  // --- Render your real UI below ---
   return (
-    <main className="max-w-3xl mx-auto p-6 space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold">{row.pc_display}</h1>
-        <p className="text-sm opacity-70">
-          Data timestamp: {new Date(row.updated_at).toLocaleString()}
-        </p>
-      </header>
-
-      <div className="grid gap-3">
-        {fields.map((k) => {
-          const label = LABELS[String(k)] ?? String(k);
-          const value = row[k];
-          return (
-            <div key={String(k)} className="flex justify-between border rounded-lg px-3 py-2">
-              <span className="opacity-70">{label}</span>
-              <span>{value == null ? "—" : String(value)}</span>
-            </div>
-          );
-        })}
-      </div>
+    <main className="p-6">
+      <h1 className="text-2xl font-semibold">Postcode: {row.pc_display}</h1>
+      {/* TODO: render your metrics from `row` */}
     </main>
   );
 }
