@@ -24,6 +24,7 @@ export type DbRow = {
   [key: string]: unknown;
 };
 
+// ...imports & types...
 export async function getPostcode(rawPc: string) {
   const raw = decodeURIComponent(rawPc || "");
   const pretty = normalizePostcode(raw);
@@ -38,20 +39,12 @@ export async function getPostcode(rawPc: string) {
     .eq("is_published", true)
     .maybeSingle();
 
-  if (error) {
-    console.error("[getPostcode] Supabase error:", error.message);
-    throw error;
-  }
-  if (!data) {
-    console.warn("[getPostcode] No row for", pc_norm);
-    return null;
-  }
+  if (error) throw error;
+  if (!data) return null;
 
   const row = data as DbRow;
   const pc_display = row.postcode ?? row.pc_display ?? pretty;
 
-  // Strip potential duplicates before spreading to avoid "specified more than once"
   const { pc_norm: _pc_norm, pc_display: _pc_display, postcode: _postcode, ...rest } = row;
-
   return { pc_norm, pc_display, ...rest };
 }

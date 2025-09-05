@@ -1,14 +1,16 @@
 export const runtime = "nodejs";
-
 import type { NextRequest } from "next/server";
 import { getPostcode } from "@/data/getPostcode";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ pc: string }> } // ← Promise form for typed routes
+  ctx: { params: { pc: string } } | { params: Promise<{ pc: string }> } // accept both
 ) {
+  // support both shapes transparently
+  const p = (ctx.params as any);
+  const { pc } = (typeof p?.then === "function") ? await p : p;
+
   try {
-    const { pc } = await params;
     const row = await getPostcode(pc);
     return Response.json({ ok: !!row, row });
   } catch (e) {
